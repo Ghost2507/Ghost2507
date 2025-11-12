@@ -1,0 +1,166 @@
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --accent: #00c6a7;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --card-border: #30363d;
+  }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+  }
+  
+  header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  
+  header h1 {
+    color: var(--accent);
+    font-size: 2.2em;
+    margin-bottom: 5px;
+  }
+  
+  .input-area {
+    background-color: var(--panel);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 12px rgba(0, 198, 167, 0.15);
+  }
+  
+  .input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  input[type="number"] {
+    width: 80px;
+    padding: 6px;
+    background-color: #0d1117;
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+  }
+  
+  button {
+    background-color: var(--accent);
+    color: black;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 15px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #00e0bb;
+  }
+  
+  #processInputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .process-field {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #1c2128;
+    border: 1px solid var(--card-border);
+    padding: 10px;
+    border-radius: 6px;
+  }
+  
+  .algorithmResults {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .algo-card {
+    background: var(--panel);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 0 8px rgba(0, 198, 167, 0.1);
+  }
+  
+  .taskContainer {
+    margin-top: 10px;
+    min-height: 100px;
+    background-color: #1c2128;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .task {
+    background-color: #21262d;
+    border-left: 4px solid var(--accent);
+    padding: 6px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .stats {
+    margin-top: 10px;
+    border-top: 1px solid var(--card-border);
+    padding-top: 10px;
+    color: var(--muted);
+  }
+  
+  .hidden {
+    display: none;
+  }
+
+  /* Visualization */
+  .viz {
+    margin-top: 12px;
+  }
+  .memory-bar {
+    position: relative;
+    height: 28px;
+    background-color: #0d1117;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .alloc {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: 700;
+    font-size: 12px;
+    border-right: 1px solid rgba(0,0,0,0.2);
+  }
+  .alloc.badge {
+    position: absolute;
+    top: -22px;
+    height: auto;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-weight: 600;
+  }
