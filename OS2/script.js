@@ -15,6 +15,7 @@ const processInputs = document.getElementById("processInputs");
 const algoResults = document.getElementById("algorithmResults");
 const algorithmSelect = document.getElementById("algorithmSelect");
 const memoryInput = document.getElementById("memoryLimit");
+const themeToggle = document.getElementById("themeToggle");
 
 document.getElementById("generateBtn").addEventListener("click", () => {
   const num = parseInt(String(numInput.value), 10);
@@ -45,6 +46,13 @@ function toggleLifetimeVisibility() {
 
 if (algorithmSelect) {
   algorithmSelect.addEventListener("change", toggleLifetimeVisibility);
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("light");
+    themeToggle.textContent = isLight ? "Switch to Dark Mode" : "Switch to Light Mode";
+  });
 }
 
 processForm.addEventListener("submit", (e) => {
@@ -229,8 +237,20 @@ function hybridAlgorithm(procList) {
   let allocations = [];
   let order = 1;
 
+  const avgSize = procList.reduce((s, p) => s + p.size, 0) / (procList.length || 1);
+  const avgLifetime = procList.reduce((s, p) => s + p.lifetime, 0) / (procList.length || 1);
+
   for (let p of procList) {
-    p.score = alpha * (1 / p.size) + beta * (1 / p.lifetime);
+    let aWeight = 0.5;
+    let bWeight = 0.5;
+    if (p.lifetime <= avgLifetime) {
+      aWeight = 0.4;
+      bWeight = 0.6;
+    } else if (p.size <= avgSize && p.lifetime > avgLifetime) {
+      aWeight = 0.6;
+      bWeight = 0.4;
+    }
+    p.score = aWeight * (1 / p.size) + bWeight * (1 / p.lifetime);
   }
 
   procList.sort((a, b) => b.score - a.score);
@@ -257,25 +277,82 @@ function hybridAlgorithm(procList) {
 }
 
 function renderVisualization(vizBox, allocations) {
+  const grid = document.createElement("div");
+  grid.className = "viz-grid";
   const bar = document.createElement("div");
-  bar.className = "memory-bar";
+  bar.className = "memory-stack";
   bar.title = `Memory (0 - ${memorySize} KB)`;
-  vizBox.appendChild(bar);
+  grid.appendChild(bar);
 
   const palette = ["#00c6a7", "#58a6ff", "#e3b341", "#ff7b72", "#a371f7", "#1f6feb", "#2ea043", "#d29922"];
 
-  allocations.forEach((a, idx) => {
-    const leftPercent = (a.start / memorySize) * 100;
-    const widthPercent = (a.size / memorySize) * 100;
+  const sorted = [...allocations].sort((a, b) => a.start - b.start);
+  let prevEnd = 0;
+  const freeSegments = [];
+  for (const a of sorted) {
+    if (a.start > prevEnd) freeSegments.push({ start: prevEnd, size: a.start - prevEnd });
+    prevEnd = a.start + a.size;
+  }
+  if (prevEnd < memorySize) freeSegments.push({ start: prevEnd, size: memorySize - prevEnd });
+
+  freeSegments.forEach(seg => {
+    const bottomPercent = (seg.start / memorySize) * 100;
+    const heightPercent = (seg.size / memorySize) * 100;
+    const free = document.createElement("div");
+    free.className = "free-block";
+    free.style.bottom = `${bottomPercent}%`;
+    free.style.height = `${heightPercent}%`;
+    free.title = `Free ${seg.size}KB @${seg.start}`;
+    bar.appendChild(free);
+  });
+
+  sorted.forEach((a, idx) => {
+    const bottomPercent = (a.start / memorySize) * 100;
+    const heightPercent = (a.size / memorySize) * 100;
     const block = document.createElement("div");
     block.className = "alloc";
-    block.style.left = `${leftPercent}%`;
-    block.style.width = `${widthPercent}%`;
+    block.style.bottom = `${bottomPercent}%`;
+    block.style.height = `${heightPercent}%`;
     block.style.backgroundColor = palette[idx % palette.length];
     block.innerHTML = `${a.order}`;
     block.title = `#${a.order} P${a.processId} @${a.start} size ${a.size}`;
     bar.appendChild(block);
   });
+
+  const used = allocations.reduce((s, a) => s + a.size, 0);
+  const free = Math.max(0, memorySize - used);
+  const largestFree = freeSegments.length ? Math.max(...freeSegments.map(s => s.size)) : 0;
+  const avgAlloc = allocations.length ? Math.round(allocations.reduce((s, a) => s + a.size, 0) / allocations.length) : 0;
+  const stats = document.createElement("div");
+  stats.className = "stats-card";
+  stats.innerHTML = `
+    <h3>Memory Stats</h3>
+    <div class="row"><span>Used</span><span>${used} KB</span></div>
+    <div class="row"><span>Free</span><span>${free} KB</span></div>
+    <div class="row"><span>Allocations</span><span>${allocations.length}</span></div>
+    <div class="row"><span>Free Segments</span><span>${freeSegments.length}</span></div>
+    <div class="row"><span>Largest Free</span><span>${largestFree} KB</span></div>
+    <div class="row"><span>Avg Allocation</span><span>${avgAlloc} KB</span></div>
+  `;
+  grid.appendChild(stats);
+  vizBox.appendChild(grid);
+
+  const tasks = document.createElement("div");
+  tasks.className = "tasks-list";
+  const list = document.createElement("div");
+  [...sorted].forEach(a => {
+    const proc = processes.find(p => p.id === a.processId) || { size: a.size, lifetime: 1 };
+    let t = [];
+    if (proc.lifetime <= 3) t = ["IO", "Compute", "Cleanup"];
+    else if (proc.size <= 20) t = ["Compute", "IO", "Wait"];
+    else t = ["Load", "Compute", "Write", "Cleanup"];
+    const item = document.createElement("div");
+    item.className = "tasks-item";
+    item.innerHTML = `<span>P${a.processId}</span><span>${t.join(" → ")}</span>`;
+    list.appendChild(item);
+  });
+  tasks.appendChild(list);
+  vizBox.appendChild(tasks);
 }
 
 
